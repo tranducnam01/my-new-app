@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   controlBarWrapper: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 20,
     left: 0,
     right: 0,
   },
