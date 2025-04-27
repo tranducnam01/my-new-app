@@ -1,6 +1,6 @@
 import { registerRootComponent } from 'expo';  // Thêm dòng này
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer , StackActions} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Splash from './src/Screens/Splash';
 import Login from './src/Screens/Login';
@@ -16,6 +16,10 @@ import User from './src/Screens/User';
 import History from './src/Screens/History';
 
 const Stack = createNativeStackNavigator();
+
+export const navigateAndReplace = (navigation , screen , params={}) =>{
+  navigation.dispatch(StackActions.replace(screen,params));
+};
 
 const App = () => {
   return (

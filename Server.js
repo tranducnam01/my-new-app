@@ -1,6 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
-const bcrypt = require('bcrypt');
+const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
@@ -8,18 +7,13 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-app.use((req, res, next) => {
-  console.log(`📥 Request nhận được: ${req.method} ${req.url}`);
-  next();
-});
-
-
 // Kết nối MySQL
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root',       // đổi theo tài khoản MySQL của bạn
-  password: '',       // mật khẩu MySQL
-  database: 'myapp'   // tên database
+  user: 'root',
+  password: '',
+  port: 3306,
+  database: 'myapp'
 });
 
 db.connect(err => {
@@ -30,55 +24,100 @@ db.connect(err => {
   console.log('✅ Kết nối MySQL thành công');
 });
 
-// Tạo bảng nếu chưa có
-
-
-// API ĐĂNG KÝ
+// API Đăng ký
 app.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body;
-  
-    // Kiểm tra email
-    db.query('SELECT * FROM users WHERE email = ?', [email], async (err, emailResults) => {
-      if (err) return res.status(500).json({ message: 'Lỗi server', error: err });
-      if (emailResults.length > 0) return res.status(400).json({ message: 'Email đã được sử dụng' });
-  
-      // Kiểm tra username
-      db.query('SELECT * FROM users WHERE name = ?', [name], async (err, nameResults) => {
-        if (err) return res.status(500).json({ message: 'Lỗi server', error: err });
-        if (nameResults.length > 0) return res.status(400).json({ message: 'Tên người dùng đã tồn tại' });
-  
-        // Hash và insert nếu mọi thứ ổn
-        const hashedPassword = await bcrypt.hash(password, 10);
-        db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-          [name, email, hashedPassword],
-          (err, result) => {
-            if (err) return res.status(500).json({ message: 'Không thể tạo tài khoản', error: err });
-            res.status(201).json({ message: 'Tạo tài khoản thành công' });
-          });
+  const { name, email, password } = req.body;
+
+  try {
+    // 1. Kiểm tra email tồn tại
+    db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({ success: false, message: 'Lỗi server' });
+      }
+
+      if (results.length > 0) {
+        return res.send({ success: false, message: 'Email đã tồn tại' });
+      }
+
+      // 2. Mã hóa mật khẩu với bcrypt
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // 3. Lưu user mới vào database
+      const newUser = { name, email, password: hashedPassword };
+      db.query('INSERT INTO users SET ?', newUser, (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send({ success: false, message: 'Lỗi server' });
+        }
+        res.send({ 
+          success: true, 
+          message: 'Đăng ký thành công',
+          userId: result.insertId
+        });
       });
     });
-  });
-  
-//API ĐĂNG NHẬP
-app.post('/login',async (req, res) => {
-  console.log('✅ Nhận được request /login');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: 'Lỗi server' });
+  }
+});
+
+const bcrypt = require('bcrypt');
+
+// API Đăng nhập
+app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
+  // 1. Kiểm tra email có tồn tại không
   db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-    if (err) return res.status(500).json({ message: 'Lỗi server', error: err });
-    if (results.length === 0) return res.status(400).json({ message: 'Email không tồn tại' });
+    if (err) {
+      console.error(err);
+      return res.status(500).send({ success: false, message: 'Lỗi server' });
+    }
+
+    // 2. Nếu không tìm thấy user
+    if (results.length === 0) {
+      return res.status(401).send({ 
+        success: false, 
+        message: 'Email hoặc mật khẩu không đúng' 
+      });
+    }
 
     const user = results[0];
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: 'Sai mật khẩu' });
+    
+    try {
+      // 3. So sánh mật khẩu nhập vào với mật khẩu đã hash trong DB
+      const isMatch = await bcrypt.compare(password, user.password);
+      
+      if (!isMatch) {
+        return res.status(401).send({ 
+          success: false, 
+          message: 'Email hoặc mật khẩu không đúng' 
+        });
+      }
 
-    res.status(200).json({ message: 'Đăng nhập thành công', user });
+      // 4. Đăng nhập thành công
+      res.send({ 
+        success: true, 
+        message: 'Đăng nhập thành công',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email
+          // Không trả về password
+        }
+      });
+      
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ success: false, message: 'Lỗi server' });
+    }
   });
 });
 
-
- 
 const PORT = 3000;
-app.listen(PORT,'0.0.0.0', () => {
-  console.log(` Server chạy tại http://localhost:${PORT}`);
+app.listen(PORT, '192.168.0.102', () => {
+  console.log(`Server chạy tại http://192.168.0.102:${PORT}`);
 });

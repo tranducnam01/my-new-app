@@ -13,6 +13,8 @@ import { database } from "../../Firebaseconfig";
 const Home = () => {
   const [laptopData, setLaptopData] = useState([]);
   const [smartphoneData, setSmartphoneData] = useState([]);
+  const [headphones, setHeadphoneData] = useState([]);
+  const [speakers, setSpeakerData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -20,12 +22,18 @@ const Home = () => {
       try {
         const laptopSnap = await getDocs(collection(database, 'laptop'));
         const smartphoneSnap = await getDocs(collection(database, 'smartphone'));
+        const headphoneSnap = await getDocs(collection(database, 'headphones'));
+        const speakerSnap = await getDocs(collection(database, 'speakers'));
 
         const laptops = laptopSnap.docs.map(doc => doc.data());
         const phones = smartphoneSnap.docs.map(doc => doc.data());
+        const headphoneList = headphoneSnap.docs.map(doc => doc.data());
+        const speakerList = speakerSnap.docs.map(doc => doc.data());
 
         setLaptopData(laptops);
         setSmartphoneData(phones);
+        setHeadphoneData(headphoneList);
+        setSpeakerData(speakerList);
       } catch (err) {
         console.error('❌ Error loading products:', err);
       }
@@ -34,12 +42,13 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const filteredLaptop = laptopData.filter(item =>
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const filteredSmartphone = smartphoneData.filter(item =>
-    item.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterByQuery = (data) =>
+    data.filter(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const filteredLaptop = filterByQuery(laptopData);
+  const filteredSmartphone = filterByQuery(smartphoneData);
+  const filteredHeadphones = filterByQuery(headphones);
+  const filteredSpeakers = filterByQuery(speakers);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -55,6 +64,10 @@ const Home = () => {
           <ProductCarousel data={filteredLaptop} />
           <Product_title title='Smartphone' />
           <ProductCarousel data={filteredSmartphone} />
+          <Product_title title='Headphones' />
+          <ProductCarousel data={filteredHeadphones} />
+          <Product_title title='Speakers' />
+          <ProductCarousel data={filteredSpeakers} />
         </View>
       </ScrollView>
       <ControlBar />

@@ -1,279 +1,108 @@
-import { View, Text, ScrollView, Image, TextInput,Touchable, TouchableOpacity, Alert } from 'react-native'
-import React, { useState } from 'react'
-import { myColor, MyColor } from './../Utils/MyColor';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation } from "@react-navigation/native";
-import { authentication,database } from '../../Firebaseconfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import {doc,setDoc} from "firebase/firestore";
-import uuid from 'react-native-uuid';
+const express = require('express');
+const mysql = require('mysql');
+const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 
-const Signup = () => {
-  const [isVisbile, setisVisbile] = useState(true);
-  const [userCrendetails,setuserCrendetails] = useState({
-    name:"",
-    email:"",
-    password:"",
-  });
-  const {email , password,name} =userCrendetails;
-  console.log(name)
+// Kết nối MySQL
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',       
+  password: '',      
+  port: 3306,          
+  database: 'myapp'   
+});
 
-  const uid = uuid.v4()
-  const userAccount =()=>{
-  createUserWithEmailAndPassword(authentication,email, password)
-  .then(() => {
-    Alert.alert('User account created & signed in!');
-    setDoc(doc(database,"users",uid),{
-      username:name,
-      email:email,
-      id:authentication.currentUser.uid
-    });
-  })
-  .catch(error => {
-    if (error.code === 'auth/email-already-in-use') {
-      Alert.alert('That email address is already in use!');
-      
+db.connect(err => {
+  if (err) {
+    console.error('❌ Kết nối MySQL thất bại:', err);
+    return;
+  }
+  console.log('✅ Kết nối MySQL thành công');
+});
+
+// API Đăng ký
+app.post('/signup', async (req, res) => {
+  const { name, email, password } = req.body;
+
+  // Kiểm tra đã tồn tại email chưa
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send({ success: false, message: 'Lỗi server' });
     }
 
-    if (error.code === 'auth/invalid-email') {
-      Alert.alert('That email address is invalid!');
+    if (results.length > 0) {
+      return res.send({ success: false, message: 'Email đã tồn tại' });
     }
 
-    console.error(error);
-  });
-}
-  const nav = useNavigation()
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: myColor.secondary }}>
-      <StatusBar />
-      <ScrollView style={{ flex: 1, paddingTop: 30 }}>
-        <Image
-          style={{ alignSelf: "center" }}
-          source={require('../assets/icon.png')}
-        />
+    // Hash mật khẩu
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        <View style={{ paddingHorizontal: 20, marginTop: 50 }}>
-          <Text style={{ color: myColor.third, fontSize: 24, fontWeight: '500' }}>Sign Up</Text>
-          <Text style={{ fontSize: 16, fontWeight: '400', color: 'grey', margin: 10 }}>Enter  credentails to continue </Text>
-
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 40 }}>UserName</Text>
-          <TextInput
-          
-          maxLength={20}
-          value={name}
-          onChangeText={(val)=>
-            setuserCrendetails({...userCrendetails,name:val})
-          }
-          keyboardType="name-phone-pad" style={{ borderColor: '#E3E3E3', borderBottomWidth: 3, fontSize: 16, marginTop: 15 }} />
-
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 30 }}>Email</Text>
-          <TextInput 
-             value ={email}
-             onChangeText ={(val) =>{
-               setuserCrendetails ({...userCrendetails,email:val});
-             }}
-          maxLength={20} keyboardType="email-address" style={{ borderColor: '#E3E3E3', borderBottomWidth: 3, fontSize: 16, marginTop: 15 }} />
-
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 30 }}>Password</Text>
-          <View style={{ borderColor: "E3E3E3", borderBottomWidth: 3, flexDirection: "row", justifyContent: "space-between", alignItems: 'center' }}>
-            <TextInput    
-            value ={password}
-          onChangeText ={(val) =>{
-            setuserCrendetails ({...userCrendetails,password:val});
-          }} secureTextEntry={isVisbile} maxLength={6} keyboardType="ascii-capable"
-              style={{
-
-                fontSize: 17,
-                marginTop: 15,
-                flex: 0.9,
-              }} />
-            <Ionicons onPress={
-              () => {
-                setisVisbile(!isVisbile)
-              }} 
-              name={isVisbile == true ? "eye-off-outline" : 'eye-outline'}
-               size={24} 
-               color="black" 
-               />
-          </View>
-          <Text numberOfLines={2}  style={{fontSize:14,fontWeight:'400',color:"black",marginTop:15,letterSpacing:0.7,lineHeight:20,width:'95%', opacity:0.7}}>By continue your agree to our Terms of Service and Provacy Policy</Text>
-              <TouchableOpacity 
-              onPress={userAccount}
-              style={{backgroundColor:myColor.primary,marginTop:30,height:70,borderRadius:20,justifyContent:'center',alignItems:"center"}}>
-                <Text style={{fontSize:19,color:myColor.secondary,fontWeight:'500'}}>Sign Up</Text>
-              </TouchableOpacity>
-              <View style={{flexDirection:"row",justifyContent:'center',alignItems:"center",marginTop:20,
-                gap:5
-              }}>
-                <Text style={{fontSize:16}}>Already have an account?</Text>
-                <TouchableOpacity    
-                onPress={()=>{
-                    nav.navigate('Login')
-                  }}>
-                <Text style={{fontSize:15,color:myColor.primary}}>Login Now</Text>
-
-                </TouchableOpacity>
-         
-              </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
-
-export default Signup
-
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
-
-import { myColor } from './../Utils/MyColor';  // giữ lại nếu bạn dùng file màu tùy chỉnh
-import uuid from 'react-native-uuid';
-
-
-const Signup = () => {
-  const [isVisbile, setisVisbile] = useState(true);
-  const [userCrendetails,setuserCrendetails] = useState({
-    name:"",
-    email:"",
-    password:"",
-  });
-  const {email , password,name} =userCrendetails;
-  console.log(name)
-
-  const uid = uuid.v4()
-  const userAccount = () => {
-    if (!name || !email || !password) {
-      Alert.alert('⚠️ Vui lòng nhập đầy đủ thông tin!');
-      return;
-    }
-    fetch('http://172.20.10.3:3000/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: name,
-        email: email,
-        password: password
-      })
-    })
-    .then(async res => {
-      nav.navigate('Login')
-      const data = await res.json();
-  
-      if (!res.ok) {
-        if (data.message === 'Email đã được sử dụng') {
-          Alert.alert('❌ Email này đã tồn tại!');
-        } else if (data.message === 'Tên người dùng đã tồn tại') {
-          Alert.alert('❌ Tên người dùng đã tồn tại!');
-        } else {
-          Alert.alert('❌ Đăng ký thất bại', data.message || 'Có lỗi xảy ra');
-        }
-      } else {
-        Alert.alert('✅ Tạo tài khoản thành công!');
-        // Chuyển hướng sang Login hoặc reset form tại đây nếu cần
+    // Thêm user vào DB
+    const newUser = { name, email, password: hashedPassword };
+    db.query('INSERT INTO users SET ?', newUser, (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send({ success: false, message: 'Lỗi server' });
       }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      Alert.alert('⚠️ Lỗi kết nối máy chủ');
+      res.send({ success: true, message: 'Đăng ký thành công' });
     });
-  };
-  
-  
-  const nav = useNavigation()
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: myColor.secondary }}>
-      <StatusBar />
-      <ScrollView style={{ flex: 1, paddingTop: 30 }}>
-        <Image
-          style={{ alignSelf: "center" }}
-          source={require('../assets/icon.png')}
-        />
+  });
+});
 
-        <View style={{ paddingHorizontal: 20, marginTop: 50 }}>
-          <Text style={{ color: myColor.third, fontSize: 24, fontWeight: '500' }}>Sign Up</Text>
-          <Text style={{ fontSize: 16, fontWeight: '400', color: 'grey', margin: 10 }}>Enter  credentails to continue </Text>
 
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 40 }}>UserName</Text>
-          <TextInput
-          
-          maxLength={20}
-          value={name}
-          onChangeText={(val)=>
-            setuserCrendetails({...userCrendetails,name:val})
-          }
-          keyboardType="name-phone-pad" style={{ borderColor: '#E3E3E3', borderBottomWidth: 3, fontSize: 16, marginTop: 15 }} />
+// API Đăng nhập
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
 
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 30 }}>Email</Text>
-          <TextInput 
-             value ={email}
-             onChangeText ={(val) =>{
-               setuserCrendetails ({...userCrendetails,email:val});
-             }}
-          maxLength={20} keyboardType="email-address" style={{ borderColor: '#E3E3E3', borderBottomWidth: 3, fontSize: 16, marginTop: 15 }} />
+  // Kiểm tra xem người dùng có nhập đủ email và password không
+  if (!email || !password) {
+    return res.send({ success: false, message: 'Vui lòng nhập đầy đủ email và mật khẩu' });
+  }
 
-          <Text style={{ fontSize: 16, fontWeight: '500', color: 'grey', marginTop: 30 }}>Password</Text>
-          <View style={{ borderColor: "E3E3E3", borderBottomWidth: 3, flexDirection: "row", justifyContent: "space-between", alignItems: 'center' }}>
-            <TextInput    
-            value ={password}
-          onChangeText ={(val) =>{
-            setuserCrendetails ({...userCrendetails,password:val});
-          }} secureTextEntry={isVisbile} maxLength={6} keyboardType="ascii-capable"
-              style={{
+  // Truy vấn dữ liệu từ MySQL để lấy thông tin người dùng theo email
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+    if (err) {
+      console.error('Lỗi truy vấn:', err);
+      return res.status(500).send({ success: false, message: 'Lỗi server' });
+    }
 
-                fontSize: 17,
-                marginTop: 15,
-                flex: 0.9,
-              }} />
-            <Ionicons onPress={
-              () => {
-                setisVisbile(!isVisbile)
-              }} 
-              name={isVisbile == true ? "eye-off-outline" : 'eye-outline'}
-               size={24} 
-               color="black" 
-               />
-          </View>
-          <Text numberOfLines={2}  style={{fontSize:14,fontWeight:'400',color:"black",marginTop:15,letterSpacing:0.7,lineHeight:20,width:'95%', opacity:0.7}}>By continue your agree to our Terms of Service and Provacy Policy</Text>
-              <TouchableOpacity 
-              onPress={userAccount}
-              style={{backgroundColor:myColor.primary,marginTop:30,height:70,borderRadius:20,justifyContent:'center',alignItems:"center"}}>
-                <Text style={{fontSize:19,color:myColor.secondary,fontWeight:'500'}}>Sign Up</Text>
-              </TouchableOpacity>
-              <View style={{flexDirection:"row",justifyContent:'center',alignItems:"center",marginTop:20,
-                gap:5
-              }}>
-                <Text style={{fontSize:16}}>Already have an account?</Text>
-                <TouchableOpacity    
-                onPress={()=>{
-                    nav.navigate('Login')
-                  }}>
-                <Text style={{fontSize:15,color:myColor.primary}}>Login Now</Text>
+    // Kiểm tra xem có người dùng nào với email này không
+    if (results.length === 0) {
+      return res.send({ success: false, message: 'Email không tồn tại' });
+    }
 
-                </TouchableOpacity>
-         
-              </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+    // Lấy thông tin người dùng từ kết quả truy vấn
+    const user = results[0];
 
-export default Signup
+    // Kiểm tra xem mật khẩu của người dùng có hợp lệ không
+    if (!user.password) {
+      return res.send({ success: false, message: 'Mật khẩu không hợp lệ' });
+    }
+
+    try {
+      // So sánh mật khẩu người dùng nhập vào với mật khẩu đã mã hóa trong cơ sở dữ liệu
+      const match = await bcrypt.compare(password, user.password);
+      if (match) {
+        res.send({ success: true, message: 'Đăng nhập thành công' });
+      } else {
+        res.send({ success: false, message: 'Mật khẩu không đúng' });
+      }
+    } catch (error) {
+      console.error('Lỗi khi so sánh mật khẩu:', error);
+      return res.send({ success: false, message: 'Lỗi khi đăng nhập' });
+    }
+  });
+});
+
+
+
+const PORT = 3000;
+app.listen(PORT, '192.168.0.102', () => {
+  console.log(`Server chạy tại http://192.168.0.102:${PORT}`);
+});

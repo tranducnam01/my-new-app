@@ -11,6 +11,7 @@ import {
 import { authentication, database } from '../../Firebaseconfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
+import moment from 'moment'; // 🕓 để định dạng ngày
 
 const History = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
@@ -33,7 +34,12 @@ const History = ({ navigation }) => {
           allOrders.push(data);
         });
 
-        setOrders(allOrders);
+        // 🔁 Sắp xếp đơn hàng theo ngày (mới nhất đầu tiên)
+        const sortedOrders = allOrders.sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        setOrders(sortedOrders);
       } catch (error) {
         console.error('❌ Lỗi lấy đơn hàng:', error);
       }
@@ -45,6 +51,10 @@ const History = ({ navigation }) => {
   const renderOrder = ({ item, index }) => (
     <View style={styles.orderContainer}>
       <Text style={styles.orderTitle}>Đơn hàng #{index + 1}</Text>
+      <Text style={styles.orderDate}>
+        Ngày mua: {moment(item.createdAt).format('DD/MM/YYYY HH:mm')}
+      </Text>
+
       {item.items.map((product, idx) => (
         <View key={idx} style={styles.itemRow}>
           <Image source={{ uri: product.img }} style={styles.image} />
@@ -66,7 +76,7 @@ const History = ({ navigation }) => {
           <Ionicons name="arrow-back" size={26} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerText}>Lịch sử mua hàng</Text>
-        <View style={{ width: 26 }} /> {/* Placeholder cân giữa header */}
+        <View style={{ width: 26 }} />
       </View>
 
       <View style={styles.container}>
@@ -124,8 +134,13 @@ const styles = StyleSheet.create({
   orderTitle: {
     fontWeight: 'bold',
     fontSize: 16,
-    marginBottom: 8,
     color: '#444',
+  },
+  orderDate: {
+    color: '#666',
+    fontSize: 13,
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   itemRow: {
     flexDirection: 'row',

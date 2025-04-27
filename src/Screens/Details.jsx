@@ -32,7 +32,6 @@ const Details = ({ route }) => {
                 <View
                     style={{
                         flexDirection: 'row',
-
                         justifyContent: 'space-between',
                         position: 'absolute',
                         width: "100%",

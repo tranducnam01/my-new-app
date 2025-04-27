@@ -1,23 +1,56 @@
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
-import React from 'react';
 import { responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { myColor } from '../Utils/MyColor';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, removeFromCart } from '../../Redux/CartSlice';
+import { collection, getDocs } from 'firebase/firestore';
+import { database } from '../../Firebaseconfig';
 
-const ProductCarousel = ({ data }) => {
+const ProductCarousel = () => {
+  const [products, setProducts] = useState([]);
   const dispatch = useDispatch();
   const storeData = useSelector((state) => state.CartSlide);
   const nav = useNavigation();
+
+  // Fetch all products from 4 collections
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const collectionsToFetch = ['headphones', 'laptop', 'smartphone', 'speakers'];
+      let allItems = [];
+
+      try {
+        for (const col of collectionsToFetch) {
+          const snapshot = await getDocs(collection(database, col));
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            allItems.push(data);
+          });
+        }
+
+        setProducts(allItems);
+      } catch (err) {
+        console.error("❌ Lỗi khi lấy dữ liệu sản phẩm:", err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const renderItem = ({ item }) => {
     const isInCart = storeData.some((value) => value.name === item.name);
 
     return (
       <TouchableOpacity
-        onPress={() => nav.navigate("Details", { main: item })}
+        onPress={() => {
+          if (parseInt(item.pieces) === 0) {
+            alert("Sản phẩm đã hết hàng!");
+            return;
+          }
+          nav.navigate("Details", { main: item });
+        }}
         activeOpacity={0.7}
         style={{
           height: responsiveHeight(28),
@@ -72,7 +105,7 @@ const ProductCarousel = ({ data }) => {
     <View style={{ marginBottom: 20 }}>
       <FlatList
         horizontal
-        data={data}
+        data={products}
         keyExtractor={(item, index) => index.toString()}
         showsHorizontalScrollIndicator={false}
         renderItem={renderItem}

@@ -5,12 +5,12 @@ import { responsiveHeight } from 'react-native-responsive-dimensions'
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { myColor } from '../Utils/MyColor';
 import { useDispatch, useSelector } from 'react-redux';
-import { incrementQuantity, decrementQuantity, removeFromCart } from '../../Redux/CartSlice';
-import { useNavigation } from '@react-navigation/native';
+import { incrementQuantity, decrementQuantity, removeFromCart, clearCart } from '../../Redux/CartSlice';
+import { useNavigation , StackActions} from '@react-navigation/native';
 import ControlBar from "./controlBar";
 
 // Firebase + thời gian
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { authentication, database } from '../../Firebaseconfig'
 import moment from 'moment';
 
@@ -28,27 +28,79 @@ const Cart = () => {
     const handleCheckout = async () => {
         try {
             if (storeData.length === 0) {
-                nav.navigate('Home');
+                nav.dispatch(StackActions.replace('Home'));
                 return;
             }
-
+    
             const user = authentication.currentUser;
+            if (!user) {
+                alert("Vui lòng đăng nhập để thanh toán!");
+                return;
+            }
+    
+            // Kiểm tra tồn kho trước khi thanh toán
+            for (const item of storeData) {
+                if (item.quantity > parseInt(item.pieces)) {
+                    alert(`Sản phẩm "${item.name}" không còn đủ số lượng tồn kho!`);
+                    return;
+                }
+            }
+    
             const timeNow = moment().format("YYYY-MM-DD HH:mm:ss");
             const order = {
                 items: storeData,
                 totalAmount: amount,
                 createdAt: timeNow,
-                userId: user?.uid,
-                userEmail: user?.email
+                userId: user.uid,
+                userEmail: user.email
             };
-
+    
+            // Gửi đơn hàng vào collection "orders"
             await addDoc(collection(database, "orders"), order);
-            nav.navigate('Orderplace');
+    
+            // Trừ số lượng sản phẩm trong từng collection
+            for (const item of storeData) {
+                let col = "";
+                const nameLower = item.name.toLowerCase();
+    
+                if (nameLower.includes("iphone")) col = "smartphone";
+                else if (["dell", "asus", "macbook", "acer", "lenovo", "msi", "huawei"].some(b => nameLower.includes(b))) {
+                    col = "laptop";
+                }
+                else if (["airpods", "sony", "jbl", "sennheiser", "bose"].some(b => nameLower.includes(b))) {
+                    col = "headphones";
+                }
+                else {
+                    col = "speakers";
+                }
+    
+                const productQuery = collection(database, col);
+                const querySnapshot = await getDocs(productQuery);
+    
+                for (const docSnap of querySnapshot.docs) {
+                    const data = docSnap.data();
+                    if (data.name === item.name) {
+                        const currentPieces = parseInt(data.pieces);
+                        const updatedPieces = currentPieces - item.quantity;
+    
+                        await updateDoc(doc(database, col, docSnap.id), {
+                            pieces: updatedPieces
+                        });
+                        break;
+                    }
+                }
+            }
+    
+            // Xoá giỏ hàng và điều hướng
+            dispatch(clearCart());
+            nav.dispatch(StackActions.replace('Orderplace'));
+    
         } catch (error) {
-            console.log("❌ Lỗi khi lưu đơn hàng:", error);
+            console.error("❌ Lỗi khi xử lý thanh toán:", error.message || error.code || error);
         }
-    }
-
+    };
+    
+    
     return (
         <SafeAreaView style={{
             flex: 1,
@@ -115,7 +167,7 @@ const Cart = () => {
                                             size={25}
                                             color={myColor.primary}
                                             onPress={() => {
-                                                if (item.quantity < 7) {
+                                                if (item.quantity < item.pieces) {
                                                     dispatch(incrementQuantity(item));
                                                 }
                                             }}

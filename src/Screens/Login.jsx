@@ -5,11 +5,10 @@ import { myColor, MyColor } from './../Utils/MyColor';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation } from "@react-navigation/native";
-import { authentication,database } from '../../Firebaseconfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import {doc,setDoc} from "firebase/firestore";
+import { useNavigation , StackActions} from "@react-navigation/native";
 import uuid from 'react-native-uuid';
+import axios from 'axios';
+
 
 
 
@@ -24,21 +23,29 @@ const Login = () => {
    const{email,password} = loginCredentials;
 
 
-  const loginUser = () => {
-    signInWithEmailAndPassword(authentication, email, password)
-      .then((val) => {
-        nav.replace('Home');
+   const loginUser = () => {
+    axios.post('http://192.168.0.102:3000/login', { email, password })
+      .then((response) => {
+        const { success, message } = response.data;
+        if (success) {
+          nav.dispatch(StackActions.replace('Home'));
+        } else {
+          Alert.alert('Đăng nhập thất bại', message);
+        }
       })
-      .catch((err) => {
-        Alert.alert(err.message);
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Lỗi đăng nhập', error.message);
       });
   };
+  
+  
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: myColor.secondary }}>
          <ScrollView style={{ flex: 1, paddingTop: 30 }}>
               <Image
                 style={{ alignSelf: "center" }}
-                source={require('../assets/icon.png')}
+                source={require('../assets/icon2.png')}
               />
       
               <View style={{ paddingHorizontal: 20, marginTop: 50 }}>
@@ -87,7 +94,7 @@ const Login = () => {
                       <Text style={{fontSize:16}}>Don't have an account?</Text>
                       <TouchableOpacity    
                       onPress={()=>{
-                          nav.navigate('Signup')
+                          nav.dispatch(StackActions.replace('Signup'))
                         }}>
                       <Text style={{fontSize:15,color:myColor.primary}}>Signup </Text>
       

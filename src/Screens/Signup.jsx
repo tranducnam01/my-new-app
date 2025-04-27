@@ -4,10 +4,8 @@ import { myColor } from './../Utils/MyColor';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useNavigation } from "@react-navigation/native";
-import { authentication, database } from '../../Firebaseconfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from "firebase/firestore";
+import { useNavigation ,StackActions} from "@react-navigation/native";
+import axios from 'axios';
 
 const Signup = () => {
   const [isVisbile, setisVisbile] = useState(true);
@@ -21,28 +19,23 @@ const Signup = () => {
   const nav = useNavigation();
 
   const userAccount = () => {
-    createUserWithEmailAndPassword(authentication, email, password)
-      .then(async () => {
-        const uid = authentication.currentUser.uid;
-        await setDoc(doc(database, "users", uid), {
-          username: name,
-          email: email,
-          id: uid
-        });
-        Alert.alert('Tạo tài khoản thành công!');
-        nav.replace('Login');
-      })
-      .catch(error => {
-        if (error.code === 'auth/email-already-in-use') {
-          Alert.alert('Email đã được sử dụng!');
-        } else if (error.code === 'auth/invalid-email') {
-          Alert.alert('Email không hợp lệ!');
+    axios.post('http://192.168.0.102:3000/signup', { name, email, password })
+      .then((response) => {
+        const { success, message } = response.data;
+        if (success) {
+          Alert.alert('Thành công', message);
+          nav.dispatch(StackActions.replace('Login'));
         } else {
-          console.error(error);
-          Alert.alert('Lỗi: ', error.message);
+          Alert.alert('Lỗi', message);
         }
+      })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Lỗi', error.message);
       });
   };
+  
+  
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: myColor.secondary }}>
@@ -50,7 +43,7 @@ const Signup = () => {
       <ScrollView style={{ flex: 1, paddingTop: 30 }}>
         <Image
           style={{ alignSelf: "center" }}
-          source={require('../assets/icon.png')}
+          source={require('../assets/icon2.png')}
         />
         <View style={{ paddingHorizontal: 20, marginTop: 50 }}>
           <Text style={{ color: myColor.third, fontSize: 24, fontWeight: '500' }}>Sign Up</Text>
@@ -80,7 +73,7 @@ const Signup = () => {
               value={password}
               onChangeText={(val) => setuserCrendetails({ ...userCrendetails, password: val })}
               secureTextEntry={isVisbile}
-              maxLength={20}
+              maxLength={6}
               keyboardType="default"
               style={{
                 fontSize: 17,
