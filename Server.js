@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.use(bodyParser.json());
@@ -9,7 +10,7 @@ app.use(cors());
 
 // Kết nối MySQL
 const db = mysql.createConnection({
-  host: 'localhost',
+  host: '127.0.0.1',
   user: 'root',
   password: '',
   port: 3306,
@@ -64,7 +65,7 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-const bcrypt = require('bcrypt');
+
 
 // API Đăng nhập
 app.post('/login', (req, res) => {
@@ -84,9 +85,7 @@ app.post('/login', (req, res) => {
         message: 'Email hoặc mật khẩu không đúng' 
       });
     }
-
     const user = results[0];
-    
     try {
       // 3. So sánh mật khẩu nhập vào với mật khẩu đã hash trong DB
       const isMatch = await bcrypt.compare(password, user.password);
@@ -117,7 +116,46 @@ app.post('/login', (req, res) => {
   });
 });
 
-const PORT = 3000;
-app.listen(PORT, '192.168.0.102', () => {
-  console.log(`Server chạy tại http://192.168.0.102:${PORT}`);
+
+
+// API lấy danh mục sản phẩmcategories
+app.get('/api/categories', (req, res) => {
+    db.query('SELECT * FROM categories', (err, results) => {
+    if (err) {
+     throw err;
+    }
+    console.log('✅ Đã lấy danh mục:', results);
+    res.send(results);
+  });
 });
+
+
+// API lấy danh sách sản phẩm (theo categoryId nếu có)
+app.get('/api/products', (req, res) => {
+  const { categoryId } = req.query;
+
+  let sql = 'SELECT * FROM products';
+  let params = [];
+
+  if (categoryId) {
+    sql += ' WHERE CategoryId = ?';
+    params.push(categoryId);
+  }
+
+  db.query(sql, params, (err, results) => {
+    if (err) {
+      console.error('❌ Lỗi lấy sản phẩm:', err);
+      return res.status(500).send({ success: false, message: 'Lỗi server' });
+    }
+    console.log('✅ Đã lấy sản phẩm:', results);
+    res.send(results);
+  });
+});
+
+
+
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server is running on 0.0.0.0:3000');
+});
+
+

@@ -24,6 +24,19 @@ const Login = () => {
 
 
    const loginUser = () => {
+    // Kiểm tra nhập đủ email và password chưa
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ email và password');
+      return;
+    }
+  
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      Alert.alert('Thông báo', 'Mật khẩu phải đủ 6 ký tự');
+      return;
+    }
+  
+    // Nếu hợp lệ thì gửi yêu cầu đăng nhập
     axios.post('http://192.168.0.102:3000/login', { email, password })
       .then((response) => {
         const { success, message } = response.data;
@@ -38,6 +51,7 @@ const Login = () => {
         Alert.alert('Lỗi đăng nhập', error.message);
       });
   };
+  
   
   
   return (

@@ -19,6 +19,19 @@ const Signup = () => {
   const nav = useNavigation();
 
   const userAccount = () => {
+    // Kiểm tra nhập đầy đủ thông tin
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+  
+    // Kiểm tra mật khẩu đủ 6 ký tự
+    if (password.length < 6) {
+      Alert.alert('Thông báo', 'Mật khẩu phải đủ 6 ký tự');
+      return;
+    }
+  
+    // Nếu hợp lệ thì gọi API đăng ký
     axios.post('http://192.168.0.102:3000/signup', { name, email, password })
       .then((response) => {
         const { success, message } = response.data;
@@ -34,6 +47,7 @@ const Signup = () => {
         Alert.alert('Lỗi', error.message);
       });
   };
+  
   
   
 

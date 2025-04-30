@@ -1,46 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity } from 'react-native';
-import { responsiveHeight, responsiveWidth } from 'react-native-responsive-dimensions';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { myColor } from '../Utils/MyColor';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
-import { addToCart, removeFromCart } from '../../Redux/CartSlice';
-import { collection, getDocs } from 'firebase/firestore';
-import { database } from '../../Firebaseconfig';
+import { View, Text, TouchableOpacity, Image, FlatList, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import { responsiveHeight, responsiveWidth } from "react-native-responsive-dimensions";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, removeFromCart } from "../../Redux/CartSlice";
+import { myColor } from "../Utils/MyColor";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
 
-const ProductCarousel = () => {
+const ProductCarousel = ({ categoryId }) => {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
-  const storeData = useSelector((state) => state.CartSlide);
+  const storeData = useSelector((state) => state.CartSlide); // ✅ Sửa thành CartSlide
   const nav = useNavigation();
 
-  // Fetch all products from 4 collections
   useEffect(() => {
     const fetchProducts = async () => {
-      const collectionsToFetch = ['headphones', 'laptop', 'smartphone', 'speakers'];
-      let allItems = [];
-
       try {
-        for (const col of collectionsToFetch) {
-          const snapshot = await getDocs(collection(database, col));
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            allItems.push(data);
-          });
-        }
+        const response = await axios.get(`http://192.168.0.102:3000/api/products?categoryId=${categoryId}`);
+        const mappedData = response.data.map((item) => ({
+          name: item.Name,
+          price: item.Price,
+          img: item.Img,
+          pieces: item.Pieces,
+          productId: item.ProductId,  // thêm id để dễ quản lý cart
+        }));
 
-        setProducts(allItems);
+        setProducts(mappedData);
       } catch (err) {
-        console.error("❌ Lỗi khi lấy dữ liệu sản phẩm:", err);
+        console.error("❌ Lỗi khi lấy sản phẩm:", err);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchProducts();
-  }, []);
+  }, [categoryId]);
 
   const renderItem = ({ item }) => {
-    const isInCart = storeData.some((value) => value.name === item.name);
+    const isInCart = storeData.some((value) => value.productId === item.productId); // ✅ So sánh theo id cho an toàn
 
     return (
       <TouchableOpacity
@@ -75,9 +73,9 @@ const ProductCarousel = () => {
         />
         <View style={{ gap: 4 }}>
           <Text style={{ fontSize: 16, fontWeight: '600' }}>
-            {item.name?.charAt(0).toUpperCase() + item.name?.slice(1)}
+            {item.name}
           </Text>
-          <Text style={{ color: "grey" }}>{item.pieces}</Text>
+          <Text style={{ color: "grey" }}>{item.pieces} cái</Text>
           <View
             style={{
               flexDirection: "row",
@@ -92,7 +90,9 @@ const ProductCarousel = () => {
               size={30}
               color={myColor.primary}
               onPress={() =>
-                isInCart ? dispatch(removeFromCart(item)) : dispatch(addToCart(item))
+                isInCart
+                  ? dispatch(removeFromCart(item))
+                  : dispatch(addToCart(item))
               }
             />
           </View>
@@ -101,8 +101,16 @@ const ProductCarousel = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={{ height: responsiveHeight(30), justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={myColor.primary} />
+      </View>
+    );
+  }
+
   return (
-    <View style={{ marginBottom: 20 }}>
+    <View style={{ marginTop: 10 }}>
       <FlatList
         horizontal
         data={products}
@@ -115,3 +123,4 @@ const ProductCarousel = () => {
 };
 
 export default ProductCarousel;
+

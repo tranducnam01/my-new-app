@@ -1,54 +1,40 @@
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, ActivityIndicator, Text } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HomeIcon from "../Components/HomeIcon";
 import HomeSearch from "../Components/HomeSearch";
 import HomeBanner from "../Components/HomeBanner";
-import Product_title from "../Components/Product_title";
-import ProductCarousel from "../Components/ProductCarousel";
+import ProductTitle from "../Components/Product_title";
+import ProductCarousel from "../Components/ProductCarousel"; 
 import ControlBar from "./controlBar";
-import { collection, getDocs } from 'firebase/firestore';
-import { database } from "../../Firebaseconfig";
+import axios from 'axios';
 
 const Home = () => {
-  const [laptopData, setLaptopData] = useState([]);
-  const [smartphoneData, setSmartphoneData] = useState([]);
-  const [headphones, setHeadphoneData] = useState([]);
-  const [speakers, setSpeakerData] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const laptopSnap = await getDocs(collection(database, 'laptop'));
-        const smartphoneSnap = await getDocs(collection(database, 'smartphone'));
-        const headphoneSnap = await getDocs(collection(database, 'headphones'));
-        const speakerSnap = await getDocs(collection(database, 'speakers'));
-
-        const laptops = laptopSnap.docs.map(doc => doc.data());
-        const phones = smartphoneSnap.docs.map(doc => doc.data());
-        const headphoneList = headphoneSnap.docs.map(doc => doc.data());
-        const speakerList = speakerSnap.docs.map(doc => doc.data());
-
-        setLaptopData(laptops);
-        setSmartphoneData(phones);
-        setHeadphoneData(headphoneList);
-        setSpeakerData(speakerList);
-      } catch (err) {
-        console.error('❌ Error loading products:', err);
-      }
-    };
-
-    fetchData();
+    var url = 'http://192.168.0.102:3000/api/categories';
+    axios.get(url)
+      .then((response) => {
+        console.log(response.data);
+        setCategories(response.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoading(false);
+      });
   }, []);
 
-  const filterByQuery = (data) =>
-    data.filter(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase()));
-
-  const filteredLaptop = filterByQuery(laptopData);
-  const filteredSmartphone = filterByQuery(smartphoneData);
-  const filteredHeadphones = filterByQuery(headphones);
-  const filteredSpeakers = filterByQuery(speakers);
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -60,14 +46,15 @@ const Home = () => {
           <HomeIcon />
           <HomeSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           <HomeBanner />
-          <Product_title title='Laptop' />
-          <ProductCarousel data={filteredLaptop} />
-          <Product_title title='Smartphone' />
-          <ProductCarousel data={filteredSmartphone} />
-          <Product_title title='Headphones' />
-          <ProductCarousel data={filteredHeadphones} />
-          <Product_title title='Speakers' />
-          <ProductCarousel data={filteredSpeakers} />
+          
+          {/* Hiển thị danh sách danh mục */}
+          {categories.map((category) => (
+            <View key={category.CategoryId} style={{ marginBottom: 20 }}>
+              <ProductTitle title={category.Category} /> 
+              {/* Hiển thị sản phẩm theo CategoryId */}
+              <ProductCarousel categoryId={category.CategoryId} />
+            </View>
+          ))}
         </View>
       </ScrollView>
       <ControlBar />
