@@ -16,7 +16,7 @@ export const cartSlice = createSlice({
           existing.quantity += 1;
         }
       } else {
-        state.push({ ...product, quantity: 1 });
+        state.push({ ...product, quantity: 1 ,productId : product.productId});
       }
     },
 

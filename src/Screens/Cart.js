@@ -114,6 +114,7 @@ const Cart = () => {
                 <FlatList
                     showsVerticalScrollIndicator={false}
                     data={storeData}
+                    keyExtractor={(item) => item.productId.toString()}
                     renderItem={({ item }) => (
                         <View style={{
                             height: responsiveHeight(18),
@@ -140,7 +141,7 @@ const Cart = () => {
                                         name="close"
                                         size={25}
                                         color="grey"
-                                        onPress={() => dispatch(removeFromCart(item))}
+                                        onPress={() => dispatch(removeFromCart({productId:item.productId}))}
                                     />
                                 </View>
                                 <Text style={{ fontSize: 17, color: 'grey', marginTop: 5 }}>{item.pieces}, price</Text>
@@ -159,7 +160,7 @@ const Cart = () => {
                                             name="minuscircleo"
                                             size={25}
                                             color={myColor.primary}
-                                            onPress={() => dispatch(decrementQuantity(item))}
+                                            onPress={() => dispatch(decrementQuantity({productId:item.productId}))}
                                         />
                                         <Text style={{ fontSize: 16 }}>{item.quantity}</Text>
                                         <AntDesign
@@ -168,7 +169,7 @@ const Cart = () => {
                                             color={myColor.primary}
                                             onPress={() => {
                                                 if (item.quantity < item.pieces) {
-                                                    dispatch(incrementQuantity(item));
+                                                    dispatch(incrementQuantity({productId:item.productId}));
                                                 }
                                             }}
                                         />

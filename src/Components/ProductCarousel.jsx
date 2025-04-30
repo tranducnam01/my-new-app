@@ -124,4 +124,3 @@ const ProductCarousel = ({ categoryId }) => {
 };
 
 export default ProductCarousel;
-
