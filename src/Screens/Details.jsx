@@ -10,69 +10,70 @@ import DropBox from '../Components/DropBox';
 import { myColor } from '../Utils/MyColor';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../Redux/CartSlice';
-
+import { BASE_URL } from '../Utils/config';
 
 const Details = ({ route }) => {
-    const storeData = useSelector((state) => state.CartSlide);
-    const dispatch = useDispatch()
-    const productData = route.params.main;
-    const { name, price, pieces, img } = productData;
+  const storeData = useSelector((state) => state.CartSlide);
+  const dispatch = useDispatch()
+  const productData = route.params.main;
+  const { name, price, pieces, img } = productData;
 
-    const nav = useNavigation();
+  const nav = useNavigation();
 
-    return (
+  return (
 
-        <SafeAreaView style={{ flex: 1, gap: 20, backgroundColor: "white" }}>
-            <StatusBar backgroundColor="white" />
-            <View>
-                <Image
-                    resizeMode="contain"
-                    style={{ height: 300, borderBottomLeftRadius: 15, borderBottomRightRadius: 15 }}
-                    source={{ uri: img }} />
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        position: 'absolute',
-                        width: "100%",
-                        paddingHorizontal: 15,
-                        alignItems: "center"
-                    }}>
-                    <Ionicons
-                        onPress={() => {
-                            nav.goBack();
-                        }}
-                        name="chevron-back" size={28} color="black" />
-                    <Feather name="share" size={28} color="black" />
-                </View>
-            </View>
-            <View
-                style={{ paddingHorizontal: 15, backgroundColor: "white", flex: 1 }}>
-                <View
-                    style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center"
-                    }}>
-                    <Text
-                        style={{
-                            fontSize: 25,
-                            color: 'black',
-                            fontWeight: "600"
-                        }}>
-                        {name.charAt(0).toUpperCase() + name.slice(1)}
-                    </Text>
-                    <MaterialIcons name="favorite-border" size={30} color="black" />
-                </View>
-                <Text style={{ marginTop: 5, fontSize: 15, color: 'grey' }}>{pieces} , price</Text>
-                <Text style={{ marginTop: 5, fontSize: 28, color: 'black', fontWeight: "bold" }}>{price}</Text>
-                <DropBox />
-                <View style={{
+    <SafeAreaView style={{ flex: 1, gap: 20, backgroundColor: "white" }}>
+      <StatusBar backgroundColor="white" />
+      <View>
+        <Image
+          resizeMode="contain"
+          style={{ height: 300, borderBottomLeftRadius: 15, borderBottomRightRadius: 15 }}
+          source={{ uri: img }} />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            position: 'absolute',
+            width: "100%",
+            paddingHorizontal: 15,
+            alignItems: "center"
+          }}>
+          <Ionicons
+            onPress={() => {
+              nav.goBack();
+            }}
+            name="chevron-back" size={28} color="black" />
+          <Feather name="share" size={28} color="black" />
+        </View>
+      </View>
+      <View
+        style={{ paddingHorizontal: 15, backgroundColor: "white", flex: 1 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center"
+          }}>
+          <Text
+            style={{
+              fontSize: 25,
+              color: 'black',
+              fontWeight: "600"
+            }}>
+            {name.charAt(0).toUpperCase() + name.slice(1)}
+          </Text>
+          <MaterialIcons name="favorite-border" size={30} color="black" />
+        </View>
+        <Text style={{ marginTop: 5, fontSize: 15, color: 'grey' }}>{pieces} , price</Text>
+        <Text style={{ marginTop: 5, fontSize: 28, color: 'black', fontWeight: "bold" }}>{price}</Text>
+        <DropBox />
+        <View style={{
 
-                    flex: 0.9,
-                    justifyContent: "flex-end"
-                }}>
-                    {storeData.some((value) => value.name == productData.name) ? (
+          flex: 0.9,
+          justifyContent: "flex-end"
+        }}>
+          {storeData.some((value) => value.productId === productData.productId) ? (
+
             <TouchableOpacity
               disabled={true}
               activeOpacity={0.8}
@@ -109,12 +110,12 @@ const Details = ({ route }) => {
             </TouchableOpacity>
           )}
 
-                </View>
+        </View>
 
-            </View>
+      </View>
 
-        </SafeAreaView>
-    )
+    </SafeAreaView>
+  )
 }
 
 export default Details

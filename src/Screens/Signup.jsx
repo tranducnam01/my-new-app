@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation ,StackActions} from "@react-navigation/native";
 import axios from 'axios';
+import { BASE_URL } from '../Utils/config';
 
 const Signup = () => {
   const [isVisbile, setisVisbile] = useState(true);
@@ -32,7 +33,7 @@ const Signup = () => {
     }
   
     // Nếu hợp lệ thì gọi API đăng ký
-    axios.post('http://192.168.0.102:3000/signup', { name, email, password })
+    axios.post(`${BASE_URL}/signup`, { name, email, password })
       .then((response) => {
         const { success, message } = response.data;
         if (success) {
@@ -47,10 +48,6 @@ const Signup = () => {
         Alert.alert('Lỗi', error.message);
       });
   };
-  
-  
-  
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: myColor.secondary }}>
       <StatusBar />

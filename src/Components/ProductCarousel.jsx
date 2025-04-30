@@ -7,6 +7,7 @@ import { addToCart, removeFromCart } from "../../Redux/CartSlice";
 import { myColor } from "../Utils/MyColor";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { BASE_URL } from "../Utils/config";
 
 const ProductCarousel = ({ categoryId }) => {
   const [products, setProducts] = useState([]);
@@ -18,7 +19,7 @@ const ProductCarousel = ({ categoryId }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`http://192.168.0.102:3000/api/products?categoryId=${categoryId}`);
+        const response = await axios.get(`${BASE_URL}/api/products?categoryId=${categoryId}`);
         const mappedData = response.data.map((item) => ({
           name: item.Name,
           price: item.Price,
@@ -114,7 +115,7 @@ const ProductCarousel = ({ categoryId }) => {
       <FlatList
         horizontal
         data={products}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.productId.toString()}
         showsHorizontalScrollIndicator={false}
         renderItem={renderItem}
       />

@@ -8,6 +8,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation , StackActions} from "@react-navigation/native";
 import uuid from 'react-native-uuid';
 import axios from 'axios';
+import { BASE_URL } from '../Utils/config';
 
 
 
@@ -37,7 +38,7 @@ const Login = () => {
     }
   
     // Nếu hợp lệ thì gửi yêu cầu đăng nhập
-    axios.post('http://192.168.0.102:3000/login', { email, password })
+    axios.post(`${BASE_URL}/login`, { email, password })
       .then((response) => {
         const { success, message } = response.data;
         if (success) {

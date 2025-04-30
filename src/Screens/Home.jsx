@@ -8,6 +8,7 @@ import ProductTitle from "../Components/Product_title";
 import ProductCarousel from "../Components/ProductCarousel"; 
 import ControlBar from "./controlBar";
 import axios from 'axios';
+import { BASE_URL } from "../Utils/config";
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -15,7 +16,8 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    var url = 'http://192.168.0.102:3000/api/categories';
+    var url = `${BASE_URL}/api/categories`;
+
     axios.get(url)
       .then((response) => {
         console.log(response.data);
