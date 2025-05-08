@@ -8,6 +8,10 @@ import { myColor } from "../Utils/MyColor";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { BASE_URL } from "../Utils/config";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+
 
 const ProductCarousel = ({ categoryId }) => {
   const [products, setProducts] = useState([]);
@@ -38,6 +42,66 @@ const ProductCarousel = ({ categoryId }) => {
     fetchProducts();
   }, [categoryId]);
 
+  const updateProductPieces = (productId, change) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.productId === productId
+          ? { ...product, pieces: parseInt(product.pieces) + change }
+          : product
+      )
+    );
+  };
+  
+
+  const handleAddToCart = async (item) => {
+    console.log("🛒 Sản phẩm được thêm vào giỏ hàng:", item); // 👈 in ra terminal
+    
+    updateProductPieces(item.productId, -1);
+    dispatch(addToCart(item)); // vẫn gọi Redux như cũ
+    
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // từ AsyncStorage
+      await axios.post(`${BASE_URL}/api/cart/add`, {
+        userId,
+        items: [{
+          productId: item.productId,
+          quantity: 1,
+          pieces: item.pieces -1,
+        }]
+      });
+    } catch (err) {
+      console.error("❌ Lỗi khi lưu vào MySQL:", err);
+      updateProductPieces(item.productId, 1);
+      dispatch(removeFromCart(item));
+    }
+  };
+  const handleRemoveFromCart = async (item) => {
+
+    updateProductPieces(item.productId, 1);
+    dispatch(removeFromCart(item)); // Xóa khỏi Redux
+    
+  
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.warn("⚠️ Không tìm thấy userId");
+        return;
+      }
+  
+      await axios.post(`${BASE_URL}/api/cart/delete`, {
+        userId,
+        productId: item.productId
+      });
+  
+      console.log("✅ Đã xóa sản phẩm khỏi cart và hoàn kho");
+    } catch (err) {
+      console.error("❌ Lỗi khi xóa khỏi MySQL:", err);
+      updateProductPieces(item.productId, -1);
+      dispatch(addToCart(item));
+    }
+  };
+  
+    
   const renderItem = ({ item }) => {
     const isInCart = storeData.some((value) => value.productId === item.productId); // ✅ So sánh theo id cho an toàn
 
@@ -83,8 +147,7 @@ const ProductCarousel = ({ categoryId }) => {
               alignItems: "center",
               justifyContent: "space-between",
               marginTop: 8,
-            }}
-          >
+            }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{item.price}$</Text>
             <FontAwesome
               name={isInCart ? "minus-square" : "plus-square"}
@@ -92,8 +155,8 @@ const ProductCarousel = ({ categoryId }) => {
               color={myColor.primary}
               onPress={() =>
                 isInCart
-                  ? dispatch(removeFromCart(item))
-                  : dispatch(addToCart(item))
+                  ? handleRemoveFromCart(item)
+                  : handleAddToCart(item) 
               }
             />
           </View>

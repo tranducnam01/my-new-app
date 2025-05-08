@@ -10,7 +10,7 @@ import uuid from 'react-native-uuid';
 import axios from 'axios';
 import { BASE_URL } from '../Utils/config';
 
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const Login = () => {
@@ -24,33 +24,36 @@ const Login = () => {
    const{email,password} = loginCredentials;
 
 
-   const loginUser = () => {
-    // Kiểm tra nhập đủ email và password chưa
+   const loginUser = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ email và password');
       return;
     }
   
-    // Kiểm tra độ dài mật khẩu
     if (password.length < 6) {
       Alert.alert('Thông báo', 'Mật khẩu phải đủ 6 ký tự');
       return;
     }
   
-    // Nếu hợp lệ thì gửi yêu cầu đăng nhập
-    axios.post(`${BASE_URL}/login`, { email, password })
-      .then((response) => {
-        const { success, message } = response.data;
-        if (success) {
-          nav.dispatch(StackActions.replace('Home'));
-        } else {
-          Alert.alert('Đăng nhập thất bại', message);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        Alert.alert('Lỗi đăng nhập', error.message);
-      });
+    try {
+      const response = await axios.post(`${BASE_URL}/login`, { email, password });
+      const { success, message, token, user } = response.data;
+  
+      if (success) {
+        // ✅ Lưu phiên đăng nhập vào thiết bị
+        await AsyncStorage.setItem('userToken', token);
+        await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+        await AsyncStorage.setItem('userId', user.id.toString()); // Lưu userId riêng
+
+
+        nav.dispatch(StackActions.replace('Home'));
+      } else {
+        Alert.alert('Đăng nhập thất bại', message);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Lỗi đăng nhập', error.message);
+    }
   };
   
   
