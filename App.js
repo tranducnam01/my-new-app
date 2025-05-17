@@ -1,6 +1,6 @@
 import { registerRootComponent } from 'expo';  // Thêm dòng này
 import React from 'react';
-import { NavigationContainer , StackActions} from '@react-navigation/native';
+import { NavigationContainer, StackActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Splash from './src/Screens/Splash';
 import Login from './src/Screens/Login';
@@ -14,11 +14,12 @@ import Orderplace from "./src/Screens/Orderplaced";
 import ControlBar from './src/Screens/controlBar';
 import User from './src/Screens/User';
 import History from './src/Screens/History';
+import ShippingAddress from './src/Screens/ShippingAddress';
 
 const Stack = createNativeStackNavigator();
 
-export const navigateAndReplace = (navigation , screen , params={}) =>{
-  navigation.dispatch(StackActions.replace(screen,params));
+export const navigateAndReplace = (navigation, screen, params = {}) => {
+  navigation.dispatch(StackActions.replace(screen, params));
 };
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
           <Stack.Screen name="ControlBar" component={ControlBar} />
           <Stack.Screen name="User" component={User} />
           <Stack.Screen name="History" component={History} />
+          <Stack.Screen name="ShippingAddress" component={ShippingAddress} />
 
         </Stack.Navigator>
       </NavigationContainer>

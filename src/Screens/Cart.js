@@ -1,5 +1,5 @@
 import { View, Text, Image, FlatList, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { responsiveHeight } from 'react-native-responsive-dimensions'
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -11,7 +11,8 @@ import ControlBar from "./controlBar";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { BASE_URL } from "../Utils/config";
-import { removeFromCart as removeFromCartRedux } from '../../Redux/CartSlice'; // Đổi tên local tránh trùng
+import { removeFromCart as removeFromCartRedux } from '../../Redux/CartSlice'; 
+import { setCartFromServer } from '../../Redux/CartSlice';
 
 
 
@@ -29,13 +30,13 @@ const Cart = () => {
         try {
             const userId = await AsyncStorage.getItem('userId'); // ✅ lấy userId
             if (!userId) return;
-    
+
             const response = await axios.post(`${BASE_URL}/api/cart/update`, {
                 userId,
                 productId,
                 quantity,
             });
-    
+
             console.log('✅ Cập nhật giỏ hàng thành công:', response.data);
         } catch (error) {
             console.error('❌ Lỗi khi cập nhật giỏ hàng:', error.response?.data || error.message);
@@ -45,65 +46,73 @@ const Cart = () => {
         try {
             const userId = await AsyncStorage.getItem('userId');
             if (!userId) return;
-    
+
             const response = await axios.post(`${BASE_URL}/api/cart/delete`, {
                 userId,
                 productId,
             });
-    
+
             console.log('✅ Xóa sản phẩm thành công:', response.data);
         } catch (error) {
             console.error('❌ Lỗi khi xóa sản phẩm:', error.response?.data || error.message);
         }
     };
-    const handleCheckout = async () => {
+    const fetchCartFromServer = async () => {
         try {
-            if (storeData.length === 0) {
-                nav.dispatch(StackActions.replace('Home'));
-                return;
+            const userId = await AsyncStorage.getItem('userId');
+            if (!userId) return;
+
+            const response = await axios.get(`${BASE_URL}/api/cart/get?userId=${userId}`);
+
+            if (response.data && Array.isArray(response.data)) {
+                const mappedCart = response.data.map(item => ({
+                    productId: item.ProductId,
+                    name: item.Name,
+                    price: item.price,
+                    img: item.Img,
+                    pieces: item.pieces,
+                    quantity: item.Quantity
+                }));
+                dispatch(setCartFromServer(mappedCart)); // 🛒 Đẩy giỏ hàng từ server vào Redux
             }
-
-            const user = authentication.currentUser;
-            if (!user) {
-                alert("Vui lòng đăng nhập để thanh toán!");
-                return;
-            }
-
-            // Kiểm tra tồn kho trước khi thanh toán
-            for (const item of storeData) {
-                if (item.quantity > parseInt(item.pieces)) {
-                    alert(`Sản phẩm "${item.name}" không còn đủ số lượng tồn kho!`);
-                    return;
-                }
-            }
-
-            const timeNow = moment().format("YYYY-MM-DD HH:mm:ss");
-
-            // Gửi đơn hàng vào collection "orders"
-
-            await fetch(`${BASE_URL}/api/cart`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: user.uid,
-                    items: storeData.map(item => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        pieces: item.pieces
-                    }))
-                })
-            })
-
-            // Xoá giỏ hàng và điều hướng
-            dispatch(clearCart());
-            nav.dispatch(StackActions.replace('Orderplace'));
-
         } catch (error) {
-            console.error("❌ Lỗi khi xử lý thanh toán:", error.message || error.code || error);
+            console.error('❌ Lỗi lấy giỏ hàng từ server:', error.response?.data || error.message);
         }
     };
+    useEffect(() => {
+        fetchCartFromServer();
+    }, []);
+const handleCheckout = async () => {
+    try {
+        if (storeData.length === 0) {
+            nav.dispatch(StackActions.replace('Home'));
+            return;
+        }
+
+        // Kiểm tra người dùng đã đăng nhập hay chưa
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+            alert("Vui lòng đăng nhập để thanh toán!");
+            return;
+        }
+
+        // Kiểm tra tồn kho trước khi thanh toán
+        for (const item of storeData) {
+            if (item.quantity > parseInt(item.pieces)) {
+                alert(`Sản phẩm "${item.name}" không còn đủ số lượng tồn kho!`);
+                return;
+            }
+        }
+
+        // Chuyển đến màn hình ShippingAddress
+        nav.dispatch(StackActions.replace('ShippingAddress',{amount}));
+
+    } catch (error) {
+        console.error("❌ Lỗi khi xử lý thanh toán:", error.message || error.code || error);
+    }
+};
+
+
 
 
     return (
@@ -149,7 +158,7 @@ const Cart = () => {
                                         onPress={() => {
                                             dispatch(removeFromCartRedux({ productId: item.productId })); // Xóa trên Redux trước (UI phản hồi nhanh)
                                             removeCartItem(item.productId); // Gọi API để xóa bên server MySQL
-                                        }}                                   />
+                                        }} />
                                 </View>
                                 <Text style={{ fontSize: 17, color: 'grey', marginTop: 5 }}>{item.pieces}, price</Text>
                                 <View style={{

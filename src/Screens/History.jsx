@@ -7,65 +7,92 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
-import { authentication, database } from '../../Firebaseconfig';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment'; // 🕓 để định dạng ngày
+import { BASE_URL } from '../Utils/config'; // Giả sử BASE_URL được định nghĩa
 
 const History = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOrders = async () => {
+    if (!refreshing) setLoading(true);
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.warn('⚠️ Không tìm thấy userId');
+        setOrders([]);
+        return;
+      }
+
+      const response = await axios.get(`${BASE_URL}/api/orders/processed`, {
+        params: { userId },
+      });
+
+      if (response.data.success) {
+        setOrders(response.data.orders || []);
+      } else {
+        setOrders([]);
+      }
+    } catch (error) {
+      console.error('❌ Lỗi lấy đơn hàng:', error.response?.data || error.message);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const currentUser = authentication.currentUser;
-      if (!currentUser) return;
-
-      try {
-        const q = query(
-          collection(database, 'orders'),
-          where('userId', '==', currentUser.uid)
-        );
-        const querySnapshot = await getDocs(q);
-
-        const allOrders = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          allOrders.push(data);
-        });
-
-        // 🔁 Sắp xếp đơn hàng theo ngày (mới nhất đầu tiên)
-        const sortedOrders = allOrders.sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        });
-
-        setOrders(sortedOrders);
-      } catch (error) {
-        console.error('❌ Lỗi lấy đơn hàng:', error);
-      }
-    };
-
     fetchOrders();
   }, []);
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
+  };
+
   const renderOrder = ({ item, index }) => (
     <View style={styles.orderContainer}>
-      <Text style={styles.orderTitle}>Đơn hàng #{index + 1}</Text>
+      <Text style={styles.orderTitle}>Đơn hàng #{item.OrderId}</Text>
       <Text style={styles.orderDate}>
-        Ngày mua: {moment(item.createdAt).format('DD/MM/YYYY HH:mm')}
+        Ngày mua: {moment(item.OrderDate).format('DD/MM/YYYY HH:mm')}
       </Text>
+      <Text style={styles.orderStatus}>Trạng thái: {item.Status}</Text>
 
-      {item.items.map((product, idx) => (
-        <View key={idx} style={styles.itemRow}>
-          <Image source={{ uri: product.img }} style={styles.image} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.itemName} numberOfLines={1}>
-              {product.name}
-            </Text>
-            <Text style={styles.itemQty}>Số lượng: {product.quantity}</Text>
+      {!item.items || item.items.length === 0 ? (
+        <Text style={styles.noItemsText}>Không có sản phẩm trong đơn hàng</Text>
+      ) : (
+        item.items.map((product, idx) => (
+          <View key={idx} style={styles.itemRow}>
+            <Image
+              source={{
+                uri:
+                  product.img && product.img.startsWith('http')
+                    ? product.img
+                    : 'https://via.placeholder.com/50',
+              }}
+              style={styles.image}
+              onError={(e) =>
+                console.log(`❌ Lỗi tải hình ảnh cho ${product.name}:`, e.nativeEvent.error)
+              }
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.itemName} numberOfLines={1}>
+                {product.name}
+              </Text>
+              <Text style={styles.itemQty}>Số lượng: {product.quantity}</Text>
+              <Text style={styles.itemPrice}>Giá: {product.price} VND</Text>
+              <Text style={styles.itemTotal}>Tổng: {product.totalAmount} VND</Text>
+            </View>
           </View>
-        </View>
-      ))}
+        ))
+      )}
     </View>
   );
 
@@ -80,14 +107,18 @@ const History = ({ navigation }) => {
       </View>
 
       <View style={styles.container}>
-        {orders.length === 0 ? (
-          <Text style={styles.noOrderText}>Bạn chưa có đơn hàng nào</Text>
+        {loading && !refreshing ? (
+          <ActivityIndicator size="large" color="#333" style={{ marginTop: 20 }} />
+        ) : orders.length === 0 ? (
+          <Text style={styles.noOrderText}>Bạn chưa có đơn hàng đã xử lý</Text>
         ) : (
           <FlatList
             data={orders}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={(item) => item.OrderId.toString()}
             renderItem={renderOrder}
             showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         )}
       </View>
@@ -139,8 +170,18 @@ const styles = StyleSheet.create({
   orderDate: {
     color: '#666',
     fontSize: 13,
-    marginBottom: 8,
+    marginBottom: 4,
     fontStyle: 'italic',
+  },
+  orderStatus: {
+    color: '#666',
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  noItemsText: {
+    fontStyle: 'italic',
+    color: '#999',
+    fontSize: 14,
   },
   itemRow: {
     flexDirection: 'row',
@@ -153,6 +194,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderRadius: 8,
     backgroundColor: '#ddd',
+    resizeMode: 'cover',
   },
   itemName: {
     fontSize: 15,
@@ -162,6 +204,17 @@ const styles = StyleSheet.create({
   itemQty: {
     color: 'gray',
     fontSize: 13,
+    marginTop: 2,
+  },
+  itemPrice: {
+    color: 'gray',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  itemTotal: {
+    color: 'gray',
+    fontSize: 13,
+    marginTop: 2,
   },
 });
 

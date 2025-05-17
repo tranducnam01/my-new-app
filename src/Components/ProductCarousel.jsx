@@ -51,48 +51,64 @@ const ProductCarousel = ({ categoryId }) => {
       )
     );
   };
-  
+
 
   const handleAddToCart = async (item) => {
-    console.log("🛒 Sản phẩm được thêm vào giỏ hàng:", item); // 👈 in ra terminal
-    
+    console.log("🛒 Sản phẩm được thêm vào giỏ hàng:", item);
+    if (parseInt(item.pieces) <= 0) {
+      alert("Sản phẩm đã hết hàng!");
+      return;
+    }
     updateProductPieces(item.productId, -1);
-    dispatch(addToCart(item)); // vẫn gọi Redux như cũ
-    
+    dispatch(addToCart(item));
+
     try {
-      const userId = await AsyncStorage.getItem('userId'); // từ AsyncStorage
-      await axios.post(`${BASE_URL}/api/cart/add`, {
+      const userId = await AsyncStorage.getItem('userId');
+      console.log("UserId:", userId); // Thêm log để kiểm tra
+      if (!userId) {
+        console.warn("⚠️ Không tìm thấy userId");
+        throw new Error("Không tìm thấy userId");
+      }
+
+      const response = await axios.post(`${BASE_URL}/api/cart/add`, {
         userId,
         items: [{
           productId: item.productId,
           quantity: 1,
-          pieces: item.pieces -1,
+          pieces: item.pieces - 1,
+          price: parseFloat(item.price)
         }]
       });
+      console.log("Phản hồi từ server:", response.data); // Thêm log để kiểm tra
     } catch (err) {
-      console.error("❌ Lỗi khi lưu vào MySQL:", err);
+      console.error("❌ Lỗi khi lưu vào MySQL:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       updateProductPieces(item.productId, 1);
       dispatch(removeFromCart(item));
     }
   };
+
   const handleRemoveFromCart = async (item) => {
 
     updateProductPieces(item.productId, 1);
     dispatch(removeFromCart(item)); // Xóa khỏi Redux
-    
-  
+
+
     try {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         console.warn("⚠️ Không tìm thấy userId");
         return;
       }
-  
+
       await axios.post(`${BASE_URL}/api/cart/delete`, {
         userId,
         productId: item.productId
       });
-  
+
       console.log("✅ Đã xóa sản phẩm khỏi cart và hoàn kho");
     } catch (err) {
       console.error("❌ Lỗi khi xóa khỏi MySQL:", err);
@@ -100,8 +116,8 @@ const ProductCarousel = ({ categoryId }) => {
       dispatch(addToCart(item));
     }
   };
-  
-    
+
+
   const renderItem = ({ item }) => {
     const isInCart = storeData.some((value) => value.productId === item.productId); // ✅ So sánh theo id cho an toàn
 
@@ -156,7 +172,7 @@ const ProductCarousel = ({ categoryId }) => {
               onPress={() =>
                 isInCart
                   ? handleRemoveFromCart(item)
-                  : handleAddToCart(item) 
+                  : handleAddToCart(item)
               }
             />
           </View>

@@ -1,5 +1,5 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { View, Text, Image, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native'
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -11,15 +11,42 @@ import { myColor } from '../Utils/MyColor';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../Redux/CartSlice';
 import { BASE_URL } from '../Utils/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';  // Đảm bảo axios đã được import
 
 const Details = ({ route }) => {
-  const storeData = useSelector((state) => state.CartSlide);
-  const dispatch = useDispatch()
-  const productData = route.params.main;
-  const { name, price, pieces, img } = productData;
+   const [products, setProducts] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const dispatch = useDispatch();
+   const storeData = useSelector((state) => state.CartSlide); // ✅ Sửa thành CartSlide
 
   const nav = useNavigation();
+    // Lấy dữ liệu sản phẩm từ route
+  const productData = route.params?.main;
+  const { name, price, pieces, img, productId } = productData;
 
+  const handleAddToCart = async (item) => {
+    console.log("🛒 Sản phẩm được thêm vào giỏ hàng:", item); // 👈 in ra terminal
+
+   
+    dispatch(addToCart(item)); // vẫn gọi Redux như cũ
+
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // từ AsyncStorage
+      await axios.post(`${BASE_URL}/api/cart/add`, {
+        userId,
+        items: [{
+          productId: item.productId,
+          quantity: 1,
+          pieces: item.pieces - 1,
+        }]
+      });
+      dispatch(addToCart(item)); // cập nhật Redux
+    } catch (err) {
+      console.error("❌ Lỗi khi lưu vào MySQL:", err);
+      dispatch(removeFromCart(item));
+    }
+  };
   return (
 
     <SafeAreaView style={{ flex: 1, gap: 20, backgroundColor: "white" }}>
@@ -92,7 +119,7 @@ const Details = ({ route }) => {
           ) : (
             <TouchableOpacity
               onPress={() => {
-                dispatch(addToCart(productData));
+                handleAddToCart(productData);
                 nav.navigate("Cart");
               }}
               activeOpacity={0.8}
