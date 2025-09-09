@@ -1,4 +1,5 @@
-# Welcome to your Expo app 👋
+# Welcome to your Expo app .
+# e-commerce application
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
@@ -42,9 +43,21 @@ To learn more about developing your project with Expo, look at the following res
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
+
 ## Join the community
 
 Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+📸 Hình minh họa sau khi chạy code
+
+Giao diện đăng nhập
+<img width="234" height="505" alt="image" src="https://github.com/user-attachments/assets/767a6695-b98a-4c7e-9cd0-a9b321e9bdde" />
+---
+Giao diện trang chủ 
+<img width="237" height="692" alt="image" src="https://github.com/user-attachments/assets/e6790e47-f4fd-4387-9d65-fd82e8dd742e" />
+---
+
+
+
