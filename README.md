@@ -50,23 +50,24 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+  
 📸 Hình minh họa sau khi chạy code
 
-**Giao diện đăng nhập**
+**Giao diện đăng nhập**  
 <img width="234" height="505" alt="image" src="https://github.com/user-attachments/assets/767a6695-b98a-4c7e-9cd0-a9b321e9bdde" />
 
 ---
 
-**Giao diện trang chủ** 
+**Giao diện trang chủ**  
 <img width="237" height="692" alt="image" src="https://github.com/user-attachments/assets/ef662309-009f-4b2b-a14c-cd4ef71ff4bd" />
 
 ---
 
-**Giao diện sản phẩm**
+**Giao diện sản phẩm**  
 <img width="242" height="507" alt="image" src="https://github.com/user-attachments/assets/13eddf4f-3d82-467f-b539-ff9a86bb1c43" />
 
 ---
-
 
 Ứng dụng **mobile** được phát triển bằng **React Native (Expo)** kết hợp với **Node.js + MySQL** làm backend.  
 Mục tiêu: xây dựng app với tính năng **đăng nhập tài khoản khách hàng,đăng ký tài khoản khách hàng , giỏ hàng, mua sản phẩm , đặt hàng , thanh toán online**.
