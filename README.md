@@ -62,7 +62,11 @@ Join our community of developers creating universal apps.
 
 ---
 
-# My New App
+**Giao diện sản phẩm**
+<img width="242" height="507" alt="image" src="https://github.com/user-attachments/assets/13eddf4f-3d82-467f-b539-ff9a86bb1c43" />
+
+---
+
 
 Ứng dụng **mobile** được phát triển bằng **React Native (Expo)** kết hợp với **Node.js + MySQL** làm backend.  
 Mục tiêu: xây dựng app với tính năng **đăng nhập tài khoản khách hàng,đăng ký tài khoản khách hàng , giỏ hàng, mua sản phẩm , đặt hàng , thanh toán online**.
@@ -75,6 +79,8 @@ Mục tiêu: xây dựng app với tính năng **đăng nhập tài khoản khá
 - Server lưu trữ dữ liệu trong **MySQL**
 - Upload ảnh / file (nếu có)
 - Hiển thị thông tin từ database ra app
+- Mã hóa thông tin người dùng
+- Tích hợp thanh toán online
 
 ---
 
