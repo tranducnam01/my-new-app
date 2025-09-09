@@ -62,5 +62,81 @@ Join our community of developers creating universal apps.
 
 ---
 
+# My New App
+
+Ứng dụng **mobile** được phát triển bằng **React Native (Expo)** kết hợp với **Node.js + MySQL** làm backend.  
+Mục tiêu: xây dựng app với tính năng **đăng nhập tài khoản khách hàng,đăng ký tài khoản khách hàng , giỏ hàng, mua sản phẩm , đặt hàng , thanh toán online**.
+
+---
+
+## 🚀 Tính năng chính
+- Đăng ký / đăng nhập người dùng
+- Gửi dữ liệu từ app → server Node.js
+- Server lưu trữ dữ liệu trong **MySQL**
+- Upload ảnh / file (nếu có)
+- Hiển thị thông tin từ database ra app
+
+---
+
+## 🛠️ Công nghệ sử dụng
+- **Frontend**: React Native (Expo)
+- **Backend**: Node.js + Express
+- **Database**: MySQL
+- **IDE gợi ý**: Visual Studio Code
+- **API**: RESTful API để giao tiếp giữa app và server
+
+---
+
+## 📦 Cài đặt & chạy
+
+### 1. Clone project
+```bash
+git clone https://github.com/tranducnam01/my-new-app.git
+cd my-new-app
+```
+### 2. Cài đặt và chạy server
+
+## Vào thư mục server/ (hoặc nơi chứa file Server.js).
+
+## Cài dependencies:
+```bash
+npm install
+```
+## Chỉnh cấu hình MySQL trong tạo 1 file 
+```
+bash Server.js
+```
+```bash
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',        // user MySQL
+  password: '',        // mật khẩu MySQL
+  database: 'myappdb'  // tên database
+});
+```
+## Chạy server:
+```bash
+node Server.js
+```
+## Mặc định server chạy tại:
+```bash
+http://localhost:3000
+```
+### 3. Cài đặt và chạy mobile app
+Quay lại thư mục chính
+```bash
+cd ..
+npm install
+```
+Start ứng dụng:
+```bash
+npm start
+```
+Mở app bằng Expo Go trên điện thoại, quét QR code từ terminal hoặc trình duyệt.
+
+⚠️ Lưu ý: Nếu chạy trên thiết bị thật, thay localhost bằng IP LAN của máy trong file gọi API.
+```bash
+const API_URL = "http://192.168.1.10:3000/api";
+```
 
 
