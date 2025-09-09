@@ -58,7 +58,7 @@ Join our community of developers creating universal apps.
 ---
 
 **Giao diện trang chủ** 
-<img width="237" height="692" alt="image" src="https://github.com/user-attachments/assets/e6790e47-f4fd-4387-9d65-fd82e8dd742e" />
+<img width="237" height="692" alt="image" src="https://github.com/user-attachments/assets/ef662309-009f-4b2b-a14c-cd4ef71ff4bd" />
 
 ---
 
