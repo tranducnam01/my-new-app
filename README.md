@@ -52,11 +52,14 @@ Join our community of developers creating universal apps.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 📸 Hình minh họa sau khi chạy code
 
-Giao diện đăng nhập
+**Giao diện đăng nhập**
 <img width="234" height="505" alt="image" src="https://github.com/user-attachments/assets/767a6695-b98a-4c7e-9cd0-a9b321e9bdde" />
+
 ---
-Giao diện trang chủ 
+
+**Giao diện trang chủ** 
 <img width="237" height="692" alt="image" src="https://github.com/user-attachments/assets/e6790e47-f4fd-4387-9d65-fd82e8dd742e" />
+
 ---
 
 
